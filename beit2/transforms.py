@@ -155,6 +155,8 @@ class RandomResizedCropAndInterpolationWithTwoPic:
             PIL Image: Randomly cropped and resized image.
         """
         i, j, h, w = self.get_params(img, self.scale, self.ratio)
+        # print('i, j, h, w = self.get_params(img, self.scale, self.ratio)',i, j, h, w)
+        # print('self.interpolation',self.interpolation)
         if isinstance(self.interpolation, (tuple, list)):
             interpolation = random.choice(self.interpolation)
         else:

@@ -39,7 +39,7 @@ def get_args():
     parser.add_argument('--save_ckpt_freq', default=20, type=int)
 
     # tokenizer settings
-    parser.add_argument("--tokenizer_weight", type=str)
+    parser.add_argument("--tokenizer_weight", type=str, default='https://github.com/addf400/files/releases/download/BEiT-v2/vqkd_encoder_base_decoder_3x768x12_clip-d5036aa7.pth')
     parser.add_argument("--tokenizer_model", type=str, default="vqkd_encoder_base_decoder_3x768x12_clip")
     
     # Model parameters
@@ -117,16 +117,16 @@ def get_args():
 
 
     # Dataset parameters
-    parser.add_argument('--data_path', default='data/200', type=str,
+    parser.add_argument('--data_path', default='../../MAE_Accelerometer/data/200', type=str,
                         help='dataset path')
     parser.add_argument('--eval_data_path', default='', type=str, help='dataset path')
     parser.add_argument('--data_set', default='UCIHAR',  type=str, help='dataset path')
 
     parser.add_argument('--imagenet_default_mean_and_std', default=False, action='store_true')
 
-    parser.add_argument('--output_dir', default='',
+    parser.add_argument('--output_dir', default='../../persistant_data/leo/beit/output_dir',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--log_dir', default=None,
+    parser.add_argument('--log_dir', default='../../persistant_data/leo/beit/log',
                         help='path where to tensorboard log')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -328,3 +328,33 @@ if __name__ == '__main__':
     if opts.output_dir:
         Path(opts.output_dir).mkdir(parents=True, exist_ok=True)
     main(opts)
+
+
+# torchrun --nproc_per_node=2 run_beitv2_pretraining.py
+
+
+'''
+python -m torch.distributed.launch --nproc_per_node=2 run_beitv2_pretraining.py \
+        --model beit_base_patch16_224_8k_vocab_cls_pt \
+        --shared_lm_head True \
+        --early_layers 9 \
+        --head_layers 2 \
+        --num_mask_patches 75 \
+        --second_input_size 224 \
+        --second_interpolation bicubic \
+        --min_crop_scale 0.2 \
+        --tokenizer_model vqkd_encoder_base_decoder_3x768x12_clip \
+        --tokenizer_weight https://github.com/addf400/files/releases/download/BEiT-v2/vqkd_encoder_base_decoder_3x768x12_clip-d5036aa7.pth \
+        --batch_size 128 \
+        --lr 1.5e-3 \
+        --warmup_epochs 10 \
+        --clip_grad 3.0 \
+        --drop_path 0.1 \
+        --layer_scale_init_value 0.1 \
+        --imagenet_default_mean_and_std \
+        --opt_betas 0.9 0.999 \
+        --opt_eps 1e-8  \
+        --epochs 1600 \
+        --save_ckpt_freq 20 
+
+'''

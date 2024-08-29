@@ -13,9 +13,9 @@ import argparse
 import os
 import torch
 import random
-
+from torchvision.transforms import ToPILImage
 from torchvision import datasets, transforms
-
+from torch.utils.data import Dataset, DataLoader
 from timm.data.constants import \
     IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from transforms import RandomResizedCropAndInterpolationWithTwoPic, _pil_interp
@@ -135,9 +135,10 @@ class UCIHAR(Dataset):
             self.y_dir = os.path.join(data_path, 'y_test_all_mode.pt')
 
         # Load the data from .pt files
-        self.X_data = torch.load(self.X_dir)
-        self.y_data = torch.load(self.y_dir)
+        self.X_data = torch.tensor(torch.load(self.X_dir))
+        self.y_data = torch.tensor(torch.load(self.y_dir))
         self.transform = transform
+        self.to_pil = ToPILImage()
 
         assert len(self.X_data) == len(self.y_data), "Mismatched lengths between X_data and y_data"
 
@@ -145,9 +146,10 @@ class UCIHAR(Dataset):
         return len(self.X_data)
 
     def __getitem__(self, idx):
-        X = self.X_data[idx]
+        X = self.X_data[idx].permute(0,2,1).repeat(3, 1, 1) # ch, nvar, L = 3x6x200
         y = self.y_data[idx]
-
+        X = self.to_pil(X)
+        
         if self.transform:
             X = self.transform(X)  # Apply the DataAugmentationForBEiT transformation
 
