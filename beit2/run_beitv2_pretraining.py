@@ -117,10 +117,10 @@ def get_args():
 
 
     # Dataset parameters
-    parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
+    parser.add_argument('--data_path', default='data/200', type=str,
                         help='dataset path')
     parser.add_argument('--eval_data_path', default='', type=str, help='dataset path')
-    parser.add_argument('--data_set', default='image_folder',  type=str, help='dataset path')
+    parser.add_argument('--data_set', default='UCIHAR',  type=str, help='dataset path')
 
     parser.add_argument('--imagenet_default_mean_and_std', default=False, action='store_true')
 

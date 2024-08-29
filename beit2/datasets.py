@@ -76,7 +76,8 @@ def build_beit_pretraining_dataset(args):
     transform = DataAugmentationForBEiT(args)
     print("Data Aug = %s" % str(transform))
     
-    return ImageFolder(args.data_path, transform=transform)
+    return UCIHAR(args.data_path,transform=transform)
+    #return ImageFolder(args.data_path, transform=transform)
 
 ############################################### Dataset and Transforms for Tokenizer Training #########################################################
 
@@ -119,6 +120,40 @@ def build_vqkd_dataset(is_train, args):
         raise NotImplementedError()
 
 
+
+
+########### UCIHAR#########################################################
+
+# Assuming CustomDataset is already defined
+class UCIHAR(Dataset):
+    def __init__(self, data_path, is_train=True, transform=None):
+        if is_train:
+            self.X_dir = os.path.join(data_path, 'X_train_all.pt')
+            self.y_dir = os.path.join(data_path, 'y_train_all_mode.pt')
+        else:
+            self.X_dir = os.path.join(data_path, 'X_test_all.pt')
+            self.y_dir = os.path.join(data_path, 'y_test_all_mode.pt')
+
+        # Load the data from .pt files
+        self.X_data = torch.load(self.X_dir)
+        self.y_data = torch.load(self.y_dir)
+        self.transform = transform
+
+        assert len(self.X_data) == len(self.y_data), "Mismatched lengths between X_data and y_data"
+
+    def __len__(self):
+        return len(self.X_data)
+
+    def __getitem__(self, idx):
+        X = self.X_data[idx]
+        y = self.y_data[idx]
+
+        if self.transform:
+            X = self.transform(X)  # Apply the DataAugmentationForBEiT transformation
+
+        return X, y
+    
+######################################################### #########################################################
 ############################################### Dataset and Transforms for Ft #########################################################
 
 def build_dataset(is_train, args):
