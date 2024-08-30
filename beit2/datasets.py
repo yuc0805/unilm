@@ -186,7 +186,8 @@ def build_dataset(is_train, args):
         nb_classes = args.nb_classes
         assert len(dataset.class_to_idx) == nb_classes
     else:
-        raise NotImplementedError()
+        nb_classes = 7
+        dataset = UCIHAR(args.data_path,is_train,transform=transform)
     assert nb_classes == args.nb_classes
     print("Number of the class = %d" % args.nb_classes)
 

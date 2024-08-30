@@ -40,7 +40,7 @@ import imagenet_a_r_indices
 def get_args():
     parser = argparse.ArgumentParser('BEiT fine-tuning and evaluation script for image classification', add_help=False)
     parser.add_argument('--batch_size', default=64, type=int)
-    parser.add_argument('--epochs', default=30, type=int)
+    parser.add_argument('--epochs', default=50, type=int)
     parser.add_argument('--update_freq', default=1, type=int)
     parser.add_argument('--save_ckpt_freq', default=5, type=int)
 
@@ -49,7 +49,7 @@ def get_args():
                         help='robust evaluation dataset')
     
     # Model parameters
-    parser.add_argument('--model', default='deit_base_patch16_224', type=str, metavar='MODEL',
+    parser.add_argument('--model', default='beit_base_patch16_224', type=str, metavar='MODEL',
                         help='Name of model to train')
     parser.add_argument('--qkv_bias', action='store_true')
     parser.add_argument('--disable_qkv_bias', action='store_false', dest='qkv_bias')
@@ -147,7 +147,7 @@ def get_args():
                         help='How to apply mixup/cutmix params. Per "batch", "pair", or "elem"')
 
     # * Finetuning params
-    parser.add_argument('--finetune', default='',
+    parser.add_argument('--finetune', default='../../persistent-data/leo/beit/output_dir/checkpoint-2499.pth',
                         help='finetune from checkpoint')
     parser.add_argument('--model_key', default='model|module', type=str)
     parser.add_argument('--model_prefix', default='', type=str)
@@ -159,21 +159,21 @@ def get_args():
     parser.add_argument('--disable_weight_decay_on_rel_pos_bias', action='store_true', default=False)
 
     # Dataset parameters
-    parser.add_argument('--data_path', default='/datasets01/imagenet_full_size/061417/', type=str,
+    parser.add_argument('--data_path', default='../../MAE_Accelerometer/data/200', type=str,
                         help='dataset path')
     parser.add_argument('--image_folder_class_index_file', default=None, type=str,
                         help='in22k data path, used with turing in22k label data')
     parser.add_argument('--eval_data_path', default=None, type=str, help='dataset path for evaluation')
-    parser.add_argument('--nb_classes', default=0, type=int,
+    parser.add_argument('--nb_classes', default=7, type=int,
                         help='number of the classification types')
     parser.add_argument('--load-tar', action='store_true', help='Loading *.tar files for dataset')
     parser.add_argument('--imagenet_default_mean_and_std', default=False, action='store_true')
 
-    parser.add_argument('--data_set', default='IMNET', choices=['CIFAR', 'IMNET', 'image_folder'],
+    parser.add_argument('--data_set', default='ucihar', choices=['CIFAR', 'IMNET', 'image_folder'],
                         type=str, help='ImageNet dataset path')
-    parser.add_argument('--output_dir', default='',
+    parser.add_argument('--output_dir', default='../../persistent-data/leo/beit/downstream/output',
                         help='path where to save, empty for no saving')
-    parser.add_argument('--log_dir', default=None,
+    parser.add_argument('--log_dir', default='../../persistent-data/leo/beit/downstream/log',
                         help='path where to tensorboard log')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -182,7 +182,7 @@ def get_args():
                         help='resume from checkpoint')
     parser.add_argument('--auto_resume', action='store_true')
     parser.add_argument('--no_auto_resume', action='store_false', dest='auto_resume')
-    parser.set_defaults(auto_resume=True)
+    parser.set_defaults(auto_resume=False)
 
     parser.add_argument('--save_ckpt', action='store_true')
     parser.add_argument('--no_save_ckpt', action='store_false', dest='save_ckpt')
@@ -265,6 +265,7 @@ def main(args, ds_init):
     cudnn.benchmark = True
 
     dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
+    #dataset_train = UCIHAR(args.data_path,transform=None)
     if args.disable_eval_during_finetuning:
         dataset_val = None
     else:
@@ -483,6 +484,14 @@ def main(args, ds_init):
         print("Using EMA with decay = %.8f" % args.model_ema_decay)
 
     model_without_ddp = model
+
+    # TODO: linear probing
+    #freeze weight
+    for _, p in model.named_parameters():
+        p.requires_grad = False
+    for _, p in model.head.named_parameters():
+        p.requires_grad = True
+
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     print("Model = %s" % str(model_without_ddp))
@@ -626,3 +635,6 @@ if __name__ == '__main__':
     if opts.output_dir:
         Path(opts.output_dir).mkdir(parents=True, exist_ok=True)
     main(opts, ds_init)
+
+
+# sudo /opt/conda/bin/python -m run_class_finetuning
